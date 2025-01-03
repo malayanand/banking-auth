@@ -15,11 +15,27 @@ type AuthService interface {
 }
 
 func (s DefaultAuthService) Login(req dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) {
-	//var login *domain.Login
+	var login *domain.Login
+	var appErr *errs.AppError
 
-	if _, appErr := s.repo.FindBy(req.Username, req.Password); appErr != nil {
+	// get the user details. If the user exists
+	if login, appErr = s.repo.FindBy(req.Username, req.Password); appErr != nil {
 		return nil, appErr
 	}
 
-	return nil, nil
+	// get login claims from domain
+	claims := login.ClaimsForAccessToken()
+	// get auth token using the login claims just fetched
+	authToken := domain.NewAuthToken(claims)
+
+	var accessToken, refreshToken string
+	if accessToken, appErr = authToken.NewAccessToken(); appErr != nil {
+		return nil, appErr
+	}
+
+	if refreshToken, appErr = s.repo.GenerateAndSaveRefreshTokenToStore(authToken); appErr != nil {
+		return nil, appErr
+	}
+
+	return &dto.LoginResponse{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }

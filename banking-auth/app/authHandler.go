@@ -29,7 +29,7 @@ func (ah AuthHandler) Loign(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeResponse(w http.ResponseWriter, code int, data interface{}) {
-	w.Header().Add("Content-Tyoe", "application/json")
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		panic(err)
